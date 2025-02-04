@@ -3,8 +3,8 @@ import { validateApiKey } from '@/lib/middleware/auth';
 import { rateLimiter } from '@/lib/middleware/rateLimiter';
 import { identifyEventSchema } from '@/lib/validation/schemas';
 import { ApiResponse } from '@/types/api';
-import { prisma } from '@/utils/prisma';
-import { Prisma } from '@prisma/client';
+import { ProfileService } from '@/lib/services/ProfileService';
+import { IdentifyEvent } from '@/types/tracking';
 
 export async function POST(
   request: NextRequest
@@ -33,32 +33,14 @@ export async function POST(
     }
 
     // Validate request body
-    const validatedData = identifyEventSchema.parse(body);
+    const validatedData = identifyEventSchema.parse(body) as IdentifyEvent;
     
-    // Create or update profile
-    await prisma.profile.upsert({
-      where: {
-        id: validatedData.userId,
-      },
-      create: {
-        id: validatedData.userId,
-        anonymousId: validatedData.anonymousId,
-        properties: validatedData.traits as Prisma.InputJsonValue,
-        isAnonymous: false,
-      },
-      update: {
-        anonymousId: validatedData.anonymousId,
-        properties: validatedData.traits as Prisma.InputJsonValue,
-        isAnonymous: false,
-        lastSeenAt: new Date(),
-      },
-    });
-
-    console.log('Identified user:', validatedData);
+    const profile = await ProfileService.identifyProfile(validatedData);
 
     return NextResponse.json({
       success: true,
-      message: 'User identified successfully'
+      message: 'User identified successfully',
+      data: { profileId: profile.id }
     });
 
   } catch (error) {
