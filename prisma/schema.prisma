@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  anonymousId   String?  @unique // For tracking anonymous users
+  email         String?  @unique
+  firstName     String?
+  lastName      String?
+  properties    Json?    // Additional properties about the profile
+  events        Event[]  // Relation to events
+  mergedInto    Profile? @relation("ProfileMerges", fields: [mergedIntoId], references: [id])
+  mergedIntoId  String?
+  mergedFrom    Profile[] @relation("ProfileMerges")
+  isAnonymous   Boolean  @default(true)
+  lastSeenAt    DateTime @default(now())
+
+  @@index([anonymousId])
+  @@index([email])
+  @@map("profiles")
+}
+
+model Metric {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String   @unique // e.g., "Visited Page", "Donated"
+  description String?
+  schema      Json     // JSON schema for the expected data structure
+  events      Event[]  // Relation to events
+  isActive    Boolean  @default(true)
+
+  @@index([name])
+  @@map("metrics")
+}
+
+model Event {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  metric    Metric   @relation(fields: [metricId], references: [id])
+  metricId  String
+  profile   Profile  @relation(fields: [profileId], references: [id])
+  profileId String
+  data      Json     // The actual event data following the metric's schema
+  timestamp DateTime @default(now())
+
+  @@index([metricId])
+  @@index([profileId])
+  @@index([timestamp])
+  @@map("events")
+}
