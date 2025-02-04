@@ -3,6 +3,8 @@ import { validateApiKey } from '@/lib/middleware/auth';
 import { rateLimiter } from '@/lib/middleware/rateLimiter';
 import { identifyEventSchema } from '@/lib/validation/schemas';
 import { ApiResponse } from '@/types/api';
+import { prisma } from '@/utils/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function POST(
   request: NextRequest
@@ -23,7 +25,7 @@ export async function POST(
     let body;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { success: false, error: 'Invalid JSON payload' },
         { status: 400 }
@@ -33,7 +35,25 @@ export async function POST(
     // Validate request body
     const validatedData = identifyEventSchema.parse(body);
     
-    // TODO: Store the identification in your database
+    // Create or update profile
+    await prisma.profile.upsert({
+      where: {
+        id: validatedData.userId,
+      },
+      create: {
+        id: validatedData.userId,
+        anonymousId: validatedData.anonymousId,
+        properties: validatedData.traits as Prisma.InputJsonValue,
+        isAnonymous: false,
+      },
+      update: {
+        anonymousId: validatedData.anonymousId,
+        properties: validatedData.traits as Prisma.InputJsonValue,
+        isAnonymous: false,
+        lastSeenAt: new Date(),
+      },
+    });
+
     console.log('Identified user:', validatedData);
 
     return NextResponse.json({
