@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateApiKey } from '../../../../lib/middleware/auth';
-import { rateLimiter } from '../../../../lib/middleware/rateLimiter';
-import { identifyEventSchema } from '../../../../lib/validation/schemas';
-import { ApiResponse } from '../../../../types/api';
+import { validateApiKey } from '@/lib/middleware/auth';
+import { rateLimiter } from '@/lib/middleware/rateLimiter';
+import { identifyEventSchema } from '@/lib/validation/schemas';
+import { ApiResponse } from '@/types/api';
 
 export async function POST(
   request: NextRequest
@@ -19,8 +19,18 @@ export async function POST(
       );
     }
 
-    // Get and validate request body
-    const body = await request.json();
+    // Parse and validate request body
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON payload' },
+        { status: 400 }
+      );
+    }
+
+    // Validate request body
     const validatedData = identifyEventSchema.parse(body);
     
     // TODO: Store the identification in your database
