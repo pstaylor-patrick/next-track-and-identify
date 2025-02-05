@@ -1,0 +1,5 @@
+[build]
+  command = "npm run generate && npm run migrate && npm run seed && npm run build"
+
+[build.environment]
+  # Add any environment variables you need here 
