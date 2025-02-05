@@ -13,7 +13,7 @@ export interface IdentifyEvent {
   timestamp?: string;
 }
 
-export interface ApiSuccessResponse<T = any> {
+export interface ApiSuccessResponse<T = unknown> {
   success: true;
   message: string;
   data: T;
@@ -24,7 +24,7 @@ export interface ApiErrorResponse {
   error: string;
 }
 
-export type ApiResponse<T = any> = ApiSuccessResponse<T> | ApiErrorResponse;
+export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 export interface IdentifyResponse {
   profileId: string;

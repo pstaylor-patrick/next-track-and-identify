@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { config } from 'dotenv';
 import { prisma } from '@/utils/prisma';
 import type { Prisma } from '@prisma/client';
@@ -93,8 +93,9 @@ describe('API Integration Tests', () => {
   const checkServer = async () => {
     try {
       await axios.get('http://localhost:3000');
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      throw new Error('Server is not running. Please start with `npm run dev`');
+      throw new Error(`Server is not running. Please start with \`npm run dev\``);
     }
   };
 

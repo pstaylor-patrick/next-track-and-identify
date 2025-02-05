@@ -1,7 +1,6 @@
 import { prisma } from '@/utils/prisma';
 import { ProfileService } from './services/ProfileService';
 import { TrackingService } from './services/TrackingService';
-import type { TrackEvent } from '@/types/tracking';
 
 describe('Service Integration Tests', () => {
   // Clean up test data before each test
@@ -209,8 +208,9 @@ describe('Service Integration Tests', () => {
       it('should throw error if profileId not provided', async () => {
         await expect(TrackingService.trackEvent({
           event: 'test_event',
-          properties: {}
-        } as any)).rejects.toThrow();
+          properties: {},
+          profileId: ''
+        })).rejects.toThrow();
       });
     });
   });
