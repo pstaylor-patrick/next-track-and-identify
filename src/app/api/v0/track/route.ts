@@ -37,10 +37,17 @@ export async function POST(
     const validatedData = trackEventSchema.parse(body) as TrackEvent;
     
     // Get or create profile based on userId or anonymousId
-    const profile = await ProfileService.getOrCreateProfile({
+    let profile = await ProfileService.getOrCreateProfile({
       userId: validatedData.userId,
       anonymousId: validatedData.anonymousId,
     });
+
+    // If no profile found, create an anonymous profile with userId as anonymousId
+    if (!profile) {
+      profile = await ProfileService.getOrCreateProfile({
+        anonymousId: validatedData.userId,
+      });
+    }
 
     if (!profile) {
       return NextResponse.json(
@@ -50,16 +57,29 @@ export async function POST(
     }
 
     // Track the event
-    const event = await TrackingService.trackEvent({
-      event: validatedData.event,
-      properties: validatedData.properties,
-      profileId: profile.id,
-    });
+    let event;
+    let note = '';
+    try {
+      event = await TrackingService.trackEvent({
+        event: validatedData.event,
+        properties: validatedData.properties,
+        profileId: profile.id,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Schema validation failed')) {
+        return NextResponse.json(
+          { success: false, error: error.message },
+          { status: 400 }
+        );
+      }
+      note = 'No schema for this metric or first time encountering this metric.';
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Event tracked successfully',
-      data: { eventId: event.id }
+      data: { eventId: event?.id, profileId: profile.id },
+      note,
     });
 
   } catch (error) {
