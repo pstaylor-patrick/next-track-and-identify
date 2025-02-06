@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
 export function validateApiKey(request: NextRequest): boolean {
-  const apiKey = request.headers.get('x-api-key');
+  const apiKey = Array.from(request.headers.entries()).find(([key]) => key.toLowerCase() === 'x-api-key')?.[1];
   
   if (!apiKey) {
     return false;

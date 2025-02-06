@@ -35,31 +35,34 @@ export async function POST(
 
     // Validate request body
     const validatedData = trackEventSchema.parse(body) as TrackEvent;
-    
-    // Get or create profile based on userId or anonymousId
-    const profile = await ProfileService.getOrCreateProfile({
-      userId: validatedData.userId,
-      anonymousId: validatedData.anonymousId,
-    });
 
-    if (!profile) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      );
-    }
+    // Get or create profile
+    const profile = await ProfileService.getOrCreateProfileForTracking(validatedData);
 
     // Track the event
-    const event = await TrackingService.trackEvent({
-      event: validatedData.event,
-      properties: validatedData.properties,
-      profileId: profile.id,
-    });
+    let event;
+    let note = '';
+    try {
+      event = await TrackingService.trackEvent({
+        event: validatedData.event,
+        properties: validatedData.properties,
+        profileId: profile.id,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Schema validation failed')) {
+        return NextResponse.json(
+          { success: false, error: error.message },
+          { status: 400 }
+        );
+      }
+      note = 'No schema for this metric or first time encountering this metric.';
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Event tracked successfully',
-      data: { eventId: event.id }
+      data: { eventId: event?.id, profileId: profile.id },
+      note,
     });
 
   } catch (error) {
@@ -69,7 +72,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
