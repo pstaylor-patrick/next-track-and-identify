@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 const rateLimit = new Map<string, { count: number; timestamp: number }>();
 
 // Allow injection of current time for testing
-export const getCurrentTime = () => Date.now();
+export const getCurrentTime = () => new Date().getTime();
 
 export async function rateLimiter(request: NextRequest) {
   // Get IP from X-Forwarded-For header or fallback to connection remote address
