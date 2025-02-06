@@ -1,6 +1,6 @@
 import { prisma } from '@/utils/prisma';
 import type { Prisma } from '@prisma/client';
-import { IdentifyEvent } from '@/types/tracking';
+import { IdentifyEvent, TrackEvent } from '@/types/tracking';
 
 export class ProfileService {
   static async identifyProfile(data: IdentifyEvent) {
@@ -68,5 +68,25 @@ export class ProfileService {
     }
 
     throw new Error('Either userId or anonymousId must be provided');
+  }
+
+  static async getOrCreateProfileForTracking(data: TrackEvent) {
+    let profile = await this.getOrCreateProfile({
+      userId: data.userId,
+      anonymousId: data.anonymousId,
+    });
+
+    if (!profile && data.userId) {
+      // If no profile found, create an anonymous profile with userId as anonymousId
+      profile = await this.getOrCreateProfile({
+        anonymousId: data.userId,
+      });
+    }
+
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+
+    return profile;
   }
 } 

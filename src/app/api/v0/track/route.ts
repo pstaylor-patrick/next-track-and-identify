@@ -35,26 +35,9 @@ export async function POST(
 
     // Validate request body
     const validatedData = trackEventSchema.parse(body) as TrackEvent;
-    
-    // Get or create profile based on userId or anonymousId
-    let profile = await ProfileService.getOrCreateProfile({
-      userId: validatedData.userId,
-      anonymousId: validatedData.anonymousId,
-    });
 
-    // If no profile found, create an anonymous profile with userId as anonymousId
-    if (!profile) {
-      profile = await ProfileService.getOrCreateProfile({
-        anonymousId: validatedData.userId,
-      });
-    }
-
-    if (!profile) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      );
-    }
+    // Get or create profile
+    const profile = await ProfileService.getOrCreateProfileForTracking(validatedData);
 
     // Track the event
     let event;
@@ -89,7 +72,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
